@@ -140,6 +140,8 @@ public class ManeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_mane);
 
         title = (TextView) findViewById(R.id.address);
+        String text = "PHONE PROXY\n";
+        
 
         ConnectivityManager cm = (ConnectivityManager)getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
@@ -157,11 +159,12 @@ public class ManeActivity extends AppCompatActivity {
                 if(!a.isLinkLocalAddress() &&
                     a instanceof Inet4Address)
                 {
-                    title.setText("PHONE PROXY\n" +
-                        a.toString().substring(1) + ":" + Stuff.PORT /* + "/get?/" */);
+                    text += a.toString().substring(1) + ":" + Stuff.PORT + "\n";
                 }
             }
         }
+
+        title.setText(text);
 
 // get permissions to access storage
         requestForPermission();
