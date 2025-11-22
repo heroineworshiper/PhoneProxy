@@ -25,6 +25,7 @@
 #include <netdb.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -55,11 +56,13 @@
 char *device_name = 0;
 char server[TEXTLEN];
 char local[TEXTLEN];
+char default_gw[TEXTLEN] = { 0 };
 int tun_fd = -1;
 int socket_fd = -1;
 pthread_mutex_t tun_lock;
 int window_size = 8192;
 int window_scale = 1;
+int got_signal = 0;
 
 typedef struct
 {
@@ -77,6 +80,7 @@ int fifo_offset1 = 0;
 int fifo_offset2 = 0;
 int fifo_used = 0;
 
+void quit();
 
 void align_packets(packet_t *packet, 
     char *src, 
@@ -384,6 +388,7 @@ void tun_reader(void *ptr)
         if(bytes_read < 0)
         {
             printf("tun disconnected. bytes_read=%d", bytes_read);
+            quit();
             exit(1);
         }
 
@@ -469,6 +474,22 @@ void write_tun(packet_t *packet_)
     pthread_mutex_unlock(&tun_lock);
 }
 
+void quit()
+{
+    char string[TEXTLEN];
+    if(default_gw[0] != 0 && !got_signal)
+    {
+        got_signal = 1;
+        printf("Restoring default gateway:\n");
+        sprintf(string, "route del default");
+        printf("%s\n", string);
+        int _ = system(string);
+        sprintf(string, "route add default gw %s", default_gw);
+        printf("%s\n", string);
+        _ = system(string);
+    }
+    exit(0);
+}
 
 int main(int argc, char *argv[])
 {
@@ -476,8 +497,51 @@ int main(int argc, char *argv[])
     char string[TEXTLEN];
     strcpy(server, PHONE_ADDRESS);
     strcpy(local, VIRTUAL_ADDRESS);
+    
+    
+    if(argc >= 2 && !strcmp(argv[1], "-h"))
+    {
+        printf("Usage: %s <phone address> <virtual gateway address>\n", argv[0]);
+        printf("Example: %s %s %s\n", argv[0], PHONE_ADDRESS, VIRTUAL_ADDRESS);
+        printf("Default phone: %s\n", PHONE_ADDRESS);
+        printf("Default virtual gateway: %s\n", VIRTUAL_ADDRESS);
+        exit(0);
+    }
+
     if(argc >= 2) strcpy(server, argv[1]);
     if(argc >= 3) strcpy(local, argv[2]);
+
+// back up the current gateway
+    FILE *fd = fopen("/proc/net/route", "r");
+    while(fgets(string, TEXTLEN, fd)) 
+    {
+        uint32_t destination;
+        uint32_t gateway;
+        uint32_t netmask;
+        int n = sscanf(string, 
+            "%*s %x %x %*s %*s %*s %*s %x",
+            &destination,
+            &gateway,
+            &netmask);
+        if(n < 3) continue;
+
+//        printf("%s%08x %08x %08x\n", string, destination, gateway, netmask);
+        if(destination == 0 && netmask == 0)
+        {
+            sprintf(default_gw, 
+                "%d.%d.%d.%d", 
+                (gateway & 0xff),
+                (gateway >> 8) & 0xff,
+                (gateway >> 16) & 0xff,
+                (gateway >> 24) & 0xff);
+
+            printf("Backing up default gateway: %s\n", default_gw);
+        }
+    }
+    fclose(fd);
+
+    signal(SIGINT, quit);
+    signal(SIGSEGV, quit);
 
 	pthread_mutexattr_t attr2;
 	pthread_mutexattr_init(&attr2);
@@ -486,7 +550,7 @@ int main(int argc, char *argv[])
     sem_init(&fifo_read_sem, 0, 0);
     sem_init(&fifo_write_sem, 0, 0);
 
-    printf("Phone address: %s\nVirtual address: %s\n",
+    printf("Phone address: %s\nGateway address: %s\n",
         server,
         local);
 
@@ -604,6 +668,7 @@ int main(int argc, char *argv[])
         if(bytes_read <= 0)
         {
             printf("phone disconnected. bytes_read=%d\n", bytes_read);
+            quit();
             exit(1);
         }
 
