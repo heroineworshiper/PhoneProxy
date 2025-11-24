@@ -228,7 +228,13 @@ void phone_writer(void *ptr)
                 fragment = FIFO_MAX - fifo_offset2;
 
             pthread_mutex_unlock(&fifo_lock);
-            int _ = write(socket_fd, &fifo_buf[fifo_offset2], fragment);
+            int bytes_written = write(socket_fd, &fifo_buf[fifo_offset2], fragment);
+            if(bytes_written <= 0)
+            {
+                printf("phone_writer %d: phone disconnected. bytes_written=%d\n",
+                    __LINE__,
+                    bytes_written);
+            }
             pthread_mutex_lock(&fifo_lock);
 
             fifo_offset2 += fragment;
@@ -450,6 +456,8 @@ void write_tun(packet_t *packet_)
                     case 3: // window scaler
                         size = packet[offset++];
                         window_scale = (1 << packet[offset++]);
+if(window_scale != 128)
+printf("write_tun %d: window_scale=%d\n", __LINE__, window_scale);
                         offset += size - 3;
                         break;
                     case 8: // timestamps
@@ -667,7 +675,8 @@ int main(int argc, char *argv[])
         int bytes_read = read(socket_fd, buffer, BUFSIZE);
         if(bytes_read <= 0)
         {
-            printf("phone disconnected. bytes_read=%d\n", bytes_read);
+            printf("main %d: phone disconnected. bytes_read=%d\n", 
+                __LINE__, bytes_read);
             quit();
             exit(1);
         }

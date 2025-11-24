@@ -30,6 +30,8 @@ Linux client -> access point <- Android PhoneProxy -> internet
 
 -------------------------------------------------------------------
 
+phoneproxy.sh: run this to get phoneproxy to reconnect automatically
+
 phoneproxy.c: client to run on the PC.  You must provide the phone's
 wifi address & a novel address to present as the gateway.
 
