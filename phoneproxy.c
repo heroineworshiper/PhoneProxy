@@ -18,6 +18,15 @@
  * 
  */
 
+// Client program for phone proxy.  Run inside phoneproxy.sh
+// Reconfigures the default route like openvpn but the nameserver
+// is redirected in the phone app.
+// gcc -O2 -o phoneproxy phoneproxy.c -lpthread
+// Usage:
+// ./phoneproxy [phone address] [virtual address]
+
+
+
 #include <netinet/in.h>
 #include <net/if.h>
 #include <linux/if_tun.h>
@@ -36,12 +45,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-// client program for phone proxy
-// gcc -O2 -o phoneproxy phoneproxy.c -lpthread
-// Usage:
-// ./phoneproxy [phone address] [virtual address]
-
-// route add default gw [virtual address]
 
 
 #define BUFSIZE 4096

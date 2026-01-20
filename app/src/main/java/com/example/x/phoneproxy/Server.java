@@ -32,6 +32,8 @@ import java.net.SocketException;
 
 public class Server extends Thread
 {
+    public static final int PORT = 8100;
+    public static final String WANT_SSID = "OVERPRICED_APT";
     public static final int TOTAL_CONNECTIONS = 32;
     public static final int TOTAL_REQUESTS = 256;
     public static final int TOTAL_TCP = 256;
@@ -53,12 +55,12 @@ public class Server extends Thread
 
         ServerSocket socket = null;
         try {
-            socket = new ServerSocket(Stuff.PORT);
+            socket = new ServerSocket(PORT);
         } catch (IOException e) {
             Log.v("Server", "run: Could not start server: " + e);
         }
 
-        Log.v("Server", "run: started server on port " + Stuff.PORT);
+        Log.v("Server", "run: started server on port " + PORT);
 
 
         // request handler loop

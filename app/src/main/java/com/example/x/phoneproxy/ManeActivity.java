@@ -1,6 +1,6 @@
 /*
  * PhoneProxy
- * Copyright (C) 2025 Adam Williams <broadcast at earthling dot net>
+ * Copyright (C) 2025-2026 Adam Williams <broadcast at earthling dot net>
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@ import android.net.ConnectivityManager;
 import android.net.LinkAddress;
 import android.net.LinkProperties;
 import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.support.v4.app.ActivityCompat;
@@ -145,23 +146,40 @@ public class ManeActivity extends AppCompatActivity {
 
         ConnectivityManager cm = (ConnectivityManager)getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            Network network = cm.getActiveNetwork();
-            LinkProperties linkProperties = cm.getLinkProperties(network);
-            List<LinkAddress> addresses = linkProperties.getLinkAddresses();
-            Iterator<LinkAddress> i = addresses.iterator();
-            while(i.hasNext())
+            Network[] networks = cm.getAllNetworks();
+            boolean gotIt = false;
+            if(networks != null)
             {
-                LinkAddress l = i.next();
-                InetAddress a = l.getAddress();
-                Log.i("x",
-                        "link local=" + a.isLinkLocalAddress() +
-                        " address=" + a.toString());
-                if(!a.isLinkLocalAddress() &&
-                    a instanceof Inet4Address)
+                for(int i = 0; i < networks.length; i++)
                 {
-                    text += a.toString().substring(1) + ":" + Stuff.PORT + "\n";
+                    NetworkCapabilities caps = cm.getNetworkCapabilities(networks[i]);
+                    if(caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI))
+                    {
+                        LinkProperties linkProperties = cm.getLinkProperties(networks[i]);
+                        List<LinkAddress> addresses = linkProperties.getLinkAddresses();
+                        Iterator<LinkAddress> j = addresses.iterator();
+                        while(j.hasNext())
+                        {
+                            LinkAddress l = j.next();
+                            InetAddress a = l.getAddress();
+                            Log.i("x",
+                                    "link local=" + a.isLinkLocalAddress() +
+                                    " address=" + a.toString());
+                            if(!a.isLinkLocalAddress() &&
+                                a instanceof Inet4Address)
+                            {
+                                text += a.toString().substring(1) + ":" + Server.PORT + "\n";
+                                gotIt = true;
+                            }
+                        }
+                    }
                 }
             }
+        
+            if(!gotIt) text += "No WIFI addresses found";
+        
+        
+//            Network network = cm.getActiveNetwork();
         }
 
         title.setText(text);
@@ -170,9 +188,10 @@ public class ManeActivity extends AppCompatActivity {
         requestForPermission();
         
         
-        Stuff.initialize(this);
+        WifiThread.instance = new WifiThread(getApplicationContext());
         Server.server = new Server();
         Server.server.start();
+        
 
 //        Stuff.loadDir();
     }
