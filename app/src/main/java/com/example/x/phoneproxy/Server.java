@@ -33,7 +33,6 @@ import java.net.SocketException;
 public class Server extends Thread
 {
     public static final int PORT = 8100;
-    public static final String WANT_SSID = "OVERPRICED_APT";
     public static final int TOTAL_CONNECTIONS = 32;
     public static final int TOTAL_REQUESTS = 256;
     public static final int TOTAL_TCP = 256;

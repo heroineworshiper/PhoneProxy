@@ -36,6 +36,8 @@ import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -145,6 +147,12 @@ public class ManeActivity extends AppCompatActivity {
         
 
         ConnectivityManager cm = (ConnectivityManager)getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        WifiManager wm = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        WifiInfo info = wm.getConnectionInfo();
+        Log.i("ManeActivity", "detected SSID " + info.getSSID());
+        text += "Using:\n" + info.getSSID() + "\n";
+        WifiThread.want_ssid = info.getSSID();
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             Network[] networks = cm.getAllNetworks();
             boolean gotIt = false;
@@ -162,7 +170,7 @@ public class ManeActivity extends AppCompatActivity {
                         {
                             LinkAddress l = j.next();
                             InetAddress a = l.getAddress();
-                            Log.i("x",
+                            Log.i("ManeActivity",
                                     "link local=" + a.isLinkLocalAddress() +
                                     " address=" + a.toString());
                             if(!a.isLinkLocalAddress() &&

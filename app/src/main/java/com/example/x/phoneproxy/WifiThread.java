@@ -44,6 +44,7 @@ public class WifiThread extends Thread
 {
     Context context;
     static WifiThread instance;
+    static String want_ssid;
 
     public WifiThread(Context context)
     {
@@ -84,13 +85,13 @@ public class WifiThread extends Thread
 
                     if(!gotIt)
                     {
-                        Log.i("WifiThread", "reconnecting");
+                        Log.i("WifiThread", "reconnecting to " + want_ssid);
                         List<WifiConfiguration> configs  = wm.getConfiguredNetworks();
                         for(int i = 0; i < configs.size(); i++) {
                             WifiConfiguration config = configs.get(i);
                             Log.i("WifiThread", "got " + config.SSID);
                             if(config.SSID != null && 
-                                config.SSID.equals("\"" + Server.WANT_SSID + "\"")) 
+                                config.SSID.equals(want_ssid))
                             {
                                 wm.enableNetwork(config.networkId, true);
                                 Log.i("WifiThread", "got SSID");
