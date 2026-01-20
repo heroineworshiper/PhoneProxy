@@ -28,8 +28,10 @@ is supported.
 
 Linux client -> access point <- Android PhoneProxy -> internet
 
-It forces the phone to reconnect to a certain access point without
-internet access.  This is currently hard coded in Server.WANT_SSID.  
+It detects what access point is connected when it starts & forces the
+phone to reconnect to the same access point if the phone disconnects. 
+The phone sometimes disconnects if it can't access the internet over
+WIFI.
 
 -------------------------------------------------------------------
 
